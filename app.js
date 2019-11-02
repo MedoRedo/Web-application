@@ -1,7 +1,7 @@
 var express = require('express');
 var path = require('path');
 
-
+var fs = require('fs');
 var app = express();
 
 // view engine setup
@@ -13,9 +13,34 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-
 app.get('/', function(req, res) {
   res.render('login');
+});
+
+// Here we handle the post request of the user in the login page
+app.post('/', function(req, res) {
+  let data = fs.readFileSync('users.json');
+  let StringData = data.toString();
+  if(StringData == ''){
+       // A message should be displayed indicating that the username is wrong
+  }
+  else{
+    let user = req.body; 
+    let parsedData = JSON.parse(StringData);
+    for(var i = 0;i<parsedData.length;i++){
+      if(parsedData[i].username  == user.username)
+      {
+        if(parsedData[i].password == user.password){
+          res.render('home');
+          break;
+        }else{
+          // A message should be displayed indicating that the password is wrong
+        }
+      }else{
+          // A message should be displayed indicating that the username is wrong
+      }
+    }
+  }
 });
 
 app.get('/action', function(req, res) {
@@ -54,12 +79,38 @@ app.get('/horror', function(req, res) {
   res.render('horror');
 });
 
-/*app.get('/login', function(req, res) {
-  res.render('login');
-});*/
 
 app.get('/registration', function(req, res) {
-  res.render('registration');
+  res.render('registration',{ output : '' });
+});
+
+//Here we handle the post request of the user in the registration page 
+app.post('/register', function(req, res) {
+    let data = fs.readFileSync('users.json');    
+    let StringData = data.toString();
+    if(StringData == '')
+      StringData = '[]';
+    let parsedData = JSON.parse(StringData);
+    var Obj = req.body;
+    var f = false;
+    for(var i = 0;i<parsedData.length;i++){
+      if(parsedData[i].username  == Obj.username){
+        f = true ;
+        break;
+      }
+    }
+    if(f){
+      // A message should indicate that this user name already exists
+      res.render('registration',{ output : 'Username already exists' });
+
+    }else{
+      parsedData.push(Obj);
+      var j = JSON.stringify(parsedData);
+      fs.writeFileSync("users.json",j);
+      res.render('registration',{ output : 'Registration done successfully' });
+      
+    }
+
 });
 
 app.get('/scream', function(req, res) {
@@ -76,19 +127,6 @@ app.get('/warchlist', function(req, res) {
 
 
 
-/*var fs = require('fs');
-var myObj = {
-  name : "Eslam",
-  age : 19
-}
-//console.log(myObj);
-var j = JSON.stringify(myObj);
-//console.log(j);
-fs.writeFileSync("aaa.json",j);
-var r = fs.readFileSync("aaa.json");
-// console.log(r);
-var obj = JSON.parse(r);
-console.log(obj);*/
 
 app.listen(3000);
 
